@@ -12,7 +12,7 @@ CREATE TABLE `tb_empresarios` (
   `data_cadastro` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `pai_empresarial_id` int(11) DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+);
 
 
 CREATE TABLE `tb_municipio` (
@@ -21,7 +21,7 @@ CREATE TABLE `tb_municipio` (
   `Nome` varchar(255) NOT NULL,
   `Uf` char(2) NOT NULL,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5571 DEFAULT CHARSET=latin1;
+);
 
 -- Insert Data --
 
