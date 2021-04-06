@@ -1,0 +1,206 @@
+<h1 class="text-center mb-2">Cadastro de Empresários</h1>
+<section id="form-cadastro-empresarios">
+    <div class="container">
+    <form method="post" id="form-cadastro-empresario" action="/registrar">
+        <div class="form-row d-flex justify-content-center">
+            <div class="form-group col-md-6">
+                <label for="nome_empresario">Nome completo</label>
+                <input type="text" class="form-control" value="<?=isset($this->view->nome_empresario) && !empty($this->view->nome_empresario) ? $this->view->nome_empresario : ''?>" name="nome_empresario" id="nome_empresario">
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="celular">Celular</label>
+                <input type="text" class="form-control" value="" name="celular" id="celular" placeholder="Ex: (34) 99999-999">
+            </div>
+
+        </div>
+
+        <div class="form-row d-flex justify-content-center">
+            <div class="form-group col-md-3">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado" class="form-control">
+                    <option value="">-- Selecione --</option>
+                </select>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label for="cidade">Cidade</label>
+                <select id="cidade" name="cidade" class="form-control">
+                    <option value="">-- Selecione --</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="form-row d-flex justify-content-center">
+            <div class="form-group col-md-9">
+                <label for="pai_empresarial">Pai Empresarial</label>
+                <select id="pai_empresarial" name="pai_empresarial" class="form-control">
+                    <option value=""> -- Selecione --</option>
+                    <?php foreach ($this->view->empresarios as $empresario) {
+                        $selecteded = isset($this->view->pai_empresarial) && $this->view->pai_empresarial === $empresario['id'] ? 'selected' :'';
+                        echo "<option $selecteded value='$empresario[id]'>$empresario[nome_completo]</option>";
+                    }?>
+                    <?php ?>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="form-row mb-2 d-flex justify-content-center">
+            <?php if(isset($this->view->erroCadastro) && $this->view->erroCadastro){?>
+                <small class="form-text text-danger">
+                    Já existe uma pessoa cadastrada com esse Celular.
+                </small>
+            <?php }?>
+
+            <?php if(isset($this->view->erroCadastro) && $this->view->erroCadastro === false){?>
+                <small class="form-text text-success">
+                    Cadastro realizado com sucesso!
+                </small>
+            <?php } ?>
+        </div>
+
+        <div class="form-row d-flex justify-content-center">
+            <button class="btn btn-outline-primary" type="submit">Cadastrar</button>
+        </div>
+
+    </form>
+    </div>
+</section>
+
+<section id="listagem-empresarios">
+    <div class="container">
+    <table class="table">
+    
+    <thead>
+      
+      <tr>
+        <th>Nome completo</th>
+        <th>Celular</th>
+        <th>Cidade/Uf</th>
+        <th>Cadastrado em</th>
+        <th>Pai empresarial</th>
+        <th>Rede</th>
+        <th>-</th>
+      </tr>
+      
+    </thead>
+    
+    <tbody>
+<?php 
+if(count($this->view->listagem_empresarios) > 0){
+  foreach($this->view->listagem_empresarios as $empresario){?>
+    <tr>
+      <td><?=$empresario['nome_completo']?></td>
+      <td><?=$empresario['celular']?></td>
+      <td><?=$empresario['localizacao']?></td>
+      <td><?=date('d/m/Y H:i',strtotime($empresario['data_cadastro']))?></td>
+      <td><?=$empresario['pai_empresarial']?></td>
+      <td> <a href="/rede?id=<?=$empresario['id']?>">[VER REDE]</a></td>
+      <td>
+        <span onclick="excluir_empresario('<?=$empresario['id']?>')" title="Excluir empresário"><i class="far fa-trash-alt text-danger"></i></span>
+      </td>
+    </tr>
+    <?php }
+  }?>
+
+ </tbody>
+</table>
+    </div>
+</section>
+
+<script>
+$(document).ready( () => {
+
+    $('#form-cadastro-empresario').validate({
+        rules:{
+            nome_empresario:{
+                required: true,
+            },
+            celular:{
+                required:true,
+                minlength:15
+            },
+            estado:{
+                required:true,
+            },
+            cidade:{
+                required:true,
+            }
+
+        }
+    });
+
+    $('#celular').mask('(99) 99999-9999');
+
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/?orderBy=nome').then(response => response.json()).then( data => {
+
+        data.forEach(function(e, i){
+            $('#estado').append($('<option></option>').val(e.id).text(e.sigla));
+        });
+
+        let aux_estado = "<?=isset($this->view->estado) && $this->view->estado !== 0 ? $this->view->estado : ''?>";
+        $('#estado').val(aux_estado);
+
+        if(aux_estado && aux_estado !== null){
+
+            fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${aux_estado}/municipios`).then(response => response.json()).then( data => {
+
+                data.forEach(function(e, i){
+                    $('#cidade').append($('<option></option>').val(e.id).text(e.nome));
+                });
+
+                let aux_cidade = "<?=isset($this->view->cidade) && $this->view->cidade !== 0 ? $this->view->cidade : ''?>";
+                $('#cidade').val(aux_cidade);
+
+            });
+        }
+
+    });
+
+    $('#estado').change( (event) => {
+        let estado = event.target.value;
+
+        $('#cidade').empty();
+
+        fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado}/municipios`).then(response => response.json()).then( data => {
+
+            $('#cidade').append($('<option></option>').val('').text('-- Selecione --'));
+
+            data.forEach(function(e, i){
+                $('#cidade').append($('<option></option>').val(e.id).text(e.nome));
+            });
+
+        });
+        
+    });
+
+});
+
+function excluir_empresario(id){
+        $.confirm({
+        title: '',
+        content: 'Deseja realmente excluir o empresário(a)?',
+        buttons: {
+            sim: function () {
+                window.location.href = `/excluir?id=${id}`;
+            },
+            cancelar: function () {}
+        }
+    });
+}
+
+</script>
+
+<style>
+.select2-selection__rendered {
+    line-height: 25px !important;
+}
+.select2-container .select2-selection--single {
+    height: 38px !important;
+}
+.select2-selection__arrow {
+    height: 34px !important;
+}
+</style>
