@@ -8,7 +8,7 @@ class Connection {
 		try {
 
 			$conn = new \PDO(
-				"mysql:host=localhost;dbname=;charset=utf8",
+				"mysql:host=localhost;dbname=cadastro_empresarios;charset=utf8",
 				"root",
 				"" 
 			);
